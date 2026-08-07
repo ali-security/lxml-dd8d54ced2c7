@@ -18,6 +18,30 @@ MANYLINUX_LIBXSLT_VERSION=1.1.39
 MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
 MANYLINUX_LDFLAGS=-flto
 
+# Pin each quay.io/pypa image to a release-era date tag. Untagged (":latest") the Python
+# set drifts: today's manylinux_2_28 / manylinux2014 / musllinux_1_1 images have dropped
+# cp36/cp37/cp38 and added cp313/cp314, so the cp36-cp38 wheels of this release could not
+# be rebuilt. The pinned tag also fixes the per-interpreter setuptools/wheel versions the
+# image ships, which is what stamps the wheel's `Generator: bdist_wheel (...)`:
+#   manylinux_2_28 / musllinux_1_1 @ 2023-12-18 -> cp36:wheel 0.37.1, cp37+:wheel 0.42.0
+#   manylinux_2_24 @ 2022-12-26 (final tag)     -> cp36:wheel 0.37.1, cp37+:wheel 0.38.4
+#   manylinux1 @ 2023-12-10                     -> cp27/cp35/cp36:wheel 0.37.1, cp37+:0.42.0
+# all of which match the published lxml 4.9.4 wheels.
+# manylinux1 and manylinux_2_24 are archived; they are pinned to their FINAL tags.
+MANYLINUX_TAG_manylinux1_x86_64=2023-12-10-cee9633
+MANYLINUX_TAG_manylinux1_i686=2023-12-10-cee9633
+MANYLINUX_TAG_manylinux_2_24_x86_64=2022-12-26-0d38463
+MANYLINUX_TAG_manylinux_2_24_i686=2022-12-26-0d38463
+MANYLINUX_TAG_manylinux_2_24_aarch64=2022-12-26-0d38463
+MANYLINUX_TAG_manylinux_2_24_ppc64le=2022-12-26-0d38463
+MANYLINUX_TAG_manylinux_2_24_s390x=2022-12-26-0d38463
+MANYLINUX_TAG_manylinux2014_aarch64=2023-12-18-e7e3b8c
+MANYLINUX_TAG_manylinux_2_28_x86_64=2023-12-18-e7e3b8c
+MANYLINUX_TAG_manylinux_2_28_aarch64=2023-12-18-e7e3b8c
+MANYLINUX_TAG_manylinux_2_28_ppc64le=2023-12-18-e7e3b8c
+MANYLINUX_TAG_musllinux_1_1_x86_64=2023-12-18-e7e3b8c
+MANYLINUX_TAG_musllinux_1_1_aarch64=2023-12-18-e7e3b8c
+
 MANYLINUX_IMAGES= \
 	manylinux1_x86_64 \
 	manylinux1_i686 \
@@ -80,7 +104,7 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		-e PYTHON_BUILD_VERSION="$(PYTHON_BUILD_VERSION)" \
 		-e WHEELHOUSE=$(subst wheel_,wheelhouse/,$@) \
-		quay.io/pypa/$(subst wheel_,,$@) \
+		quay.io/pypa/$(subst wheel_,,$@):$(MANYLINUX_TAG_$(subst wheel_,,$@)) \
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
 wheel:
